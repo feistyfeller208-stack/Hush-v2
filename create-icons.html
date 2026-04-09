@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Hush Icons</title>
+</head>
+<body>
+    <canvas id="canvas" width="512" height="512"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Background
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, 512, 512);
+        
+        // Green circle background
+        ctx.fillStyle = '#00a884';
+        ctx.beginPath();
+        ctx.arc(256, 256, 200, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Lock icon
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(206, 180, 100, 60);
+        ctx.beginPath();
+        ctx.arc(256, 180, 50, Math.PI, 0);
+        ctx.fill();
+        
+        // Lock body
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(180, 200, 152, 120);
+        ctx.beginPath();
+        ctx.arc(256, 320, 76, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Keyhole
+        ctx.fillStyle = '#00a884';
+        ctx.beginPath();
+        ctx.arc(256, 290, 25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(245, 290, 22, 40);
+        
+        // Save different sizes
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        
+        sizes.forEach(size => {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = size;
+            tempCanvas.height = size;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(canvas, 0, 0, size, size);
+            
+            const link = document.createElement('a');
+            link.download = `icon-${size}x${size}.png`;
+            link.href = tempCanvas.toDataURL();
+            link.click();
+        });
+    </script>
+</body>
+</html>
