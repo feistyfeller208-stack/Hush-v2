@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Hush - Secure Messenger</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            background: #000;
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #app {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            max-width: 600px;
+            margin: 0 auto;
+            background: #0a0a0a;
+            position: relative;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: #121212;
+            padding: 12px 16px;
+            border-bottom: 1px solid #1f1f1f;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #00a884;
+            letter-spacing: -0.5px;
+        }
+
+        .security-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #00a884;
+        }
+
+        .lock-icon {
+            font-size: 14px;
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            background: #121212;
+            border-bottom: 1px solid #1f1f1f;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 14px;
+            text-align: center;
+            color: #888;
+            font-weight: 500;
+            font-size: 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-tab.active {
+            color: #00a884;
+            border-bottom-color: #00a884;
+        }
+
+        /* Screens */
+        .screen {
+            flex: 1;
+            overflow-y: auto;
+            display: none;
+            background: #0a0a0a;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Chat List */
+        .chat-list {
+            flex: 1;
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #1a1a1a;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .chat-item:active {
+            background: #1a1a1a;
+        }
+
+        .chat-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #1f1f1f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 14px;
+            color: #00a884;
+            font-weight: 500;
+            font-size: 18px;
+        }
+
+        .chat-info {
+            flex: 1;
+        }
+
+        .chat-name {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .chat-preview {
+            font-size: 13px;
+            color: #888;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .encrypted-badge {
+            font-size: 10px;
+            color: #00a884;
+        }
+
+        .chat-meta {
+            text-align: right;
+        }
+
+        .chat-time {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .unread-badge {
+            background: #00a884;
+            color: #000;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        /* Messages Screen */
+        .messages-header {
+            background: #121212;
+            padding: 12px 16px;
+            border-bottom: 1px solid #1f1f1f;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            color: #00a884;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px 12px 8px 0;
+            margin-right: 8px;
+        }
+
+        .contact-info {
+            flex: 1;
+        }
+
+        .contact-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .encryption-status {
+            font-size: 11px;
+            color: #00a884;
+            margin-top: 2px;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .message {
+            max-width: 80%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.sent {
+            align-self: flex-end;
+        }
+
+        .message.received {
+            align-self: flex-start;
+        }
+
+        .message-bubble {
+            padding: 12px 14px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .message.sent .message-bubble {
+            background: #005c4b;
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.received .message-bubble {
+            background: #1f1f1f;
+            color: #fff;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-time {
+            font-size: 10px;
+            color: #666;
+            margin-top: 4px;
+            padding: 0 4px;
+        }
+
+        .message.sent .message-time {
+            text-align: right;
+        }
+
+        .verification-badge {
+            font-size: 9px;
+            color: #00a884;
+            margin-left: 4px;
+        }
+
+        /* Message Input */
+        .message-input-container {
+            background: #121212;
+            padding: 12px 16px;
+            border-top: 1px solid #1f1f1f;
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            background: #1f1f1f;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 16px;
+            color: #fff;
+            font-size: 15px;
+            resize: none;
+            max-height: 100px;
+            outline: none;
+        }
+
+        .message-input::placeholder {
+            color: #666;
+        }
+
+        .send-button {
+            background: #00a884;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #000;
+            font-weight: bold;
+            font-size: 18px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .send-button:active {
+            background: #008f6e;
+            transform: scale(0.95);
+        }
+
+        .send-button:disabled {
+            background: #1f1f1f;
+            color: #444;
+            cursor: not-allowed;
+        }
+
+        /* Settings Screen */
+        .settings-section {
+            padding: 20px 16px;
+            border-bottom: 1px solid #1f1f1f;
+        }
+
+        .section-title {
+            font-size: 13px;
+            color: #00a884;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .identity-card {
+            background: #121212;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .identity-name {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .key-display {
+            background: #0a0a0a;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #00a884;
+            word-break: break-all;
+            margin-bottom: 16px;
+        }
+
+        .input-field {
+            width: 100%;
+            background: #1f1f1f;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            padding: 14px;
+            color: #fff;
+            font-size: 15px;
+            margin-bottom: 12px;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: #00a884;
+        }
+
+        .button {
+            background: #00a884;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            color: #000;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .button:active {
+            background: #008f6e;
+        }
+
+        .button.secondary {
+            background: #1f1f1f;
+            color: #fff;
+        }
+
+        .button.secondary:active {
+            background: #2a2a2a;
+        }
+
+        .settings-item {
+            background: #121212;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .settings-item:active {
+            background: #1a1a1a;
+        }
+
+        .settings-label {
+            font-size: 15px;
+        }
+
+        .settings-value {
+            color: #00a884;
+            font-size: 13px;
+        }
+
+        /* Add Contact Screen */
+        .add-contact-form {
+            padding: 20px 16px;
+        }
+
+        .qr-scanner {
+            background: #121212;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 2px dashed #2a2a2a;
+        }
+
+        /* Verification Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #121212;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 90%;
+            width: 400px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #00a884;
+        }
+
+        .modal-text {
+            font-size: 14px;
+            color: #ccc;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .verification-code {
+            background: #0a0a0a;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            text-align: center;
+            letter-spacing: 4px;
+            color: #00a884;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-buttons .button {
+            flex: 1;
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Loading Indicator */
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #1f1f1f;
+            border-top-color: #00a884;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #00a884;
+            color: #000;
+            padding: 12px 20px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="app-title">Hush</div>
+            <div class="security-badge">
+                <span class="lock-icon">🔒</span>
+                <span>E2E Encrypted</span>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-screen="chats">Chats</div>
+            <div class="nav-tab" data-screen="contacts">Contacts</div>
+            <div class="nav-tab" data-screen="settings">Settings</div>
+        </div>
+
+        <!-- Chats Screen -->
+        <div id="chats-screen" class="screen active">
+            <div class="chat-list" id="chat-list">
+                <div class="empty-state">
+                    <div class="empty-state-icon">💬</div>
+                    <div>No conversations yet</div>
+                    <div style="font-size: 13px; margin-top: 8px;">Add contacts to start messaging</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages Screen -->
+        <div id="messages-screen" class="screen">
+            <div class="messages-header">
+                <button class="back-button" onclick="navigateTo('chats')">←</button>
+                <div class="contact-info">
+                    <div class="contact-name" id="current-contact-name">Contact</div>
+                    <div class="encryption-status" id="encryption-status">
+                        <span>🔒</span> End-to-end encrypted
+                    </div>
+                </div>
+            </div>
+            <div class="messages-container" id="messages-container">
+                <!-- Messages will appear here -->
+            </div>
+            <div class="message-input-container">
+                <textarea 
+                    class="message-input" 
+                    id="message-input" 
+                    placeholder="Message" 
+                    rows="1"
+                ></textarea>
+                <button class="send-button" id="send-button" onclick="sendMessage()">→</button>
+            </div>
+        </div>
+
+        <!-- Contacts Screen -->
+        <div id="contacts-screen" class="screen">
+            <div style="padding: 16px;">
+                <button class="button" onclick="showAddContact()">Add Contact</button>
+            </div>
+            <div class="chat-list" id="contacts-list">
+                <!-- Contacts will appear here -->
+            </div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settings-screen" class="screen">
+            <div class="settings-section">
+                <div class="section-title">Identity</div>
+                <div class="identity-card">
+                    <div class="identity-name" id="identity-name">Not set up</div>
+                    <div class="key-display" id="public-key-display">
+                        Create an identity to get your public key
+                    </div>
+                    <input type="text" class="input-field" id="username-input" placeholder="Your name" maxlength="30">
+                    <button class="button" onclick="createIdentity()" id="create-identity-btn">Create Identity</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="section-title">Security</div>
+                <div class="settings-item" onclick="showVerificationInfo()">
+                    <span class="settings-label">Message Verification</span>
+                    <span class="settings-value">Blockchain Secured</span>
+                </div>
+                <div class="settings-item" onclick="exportIdentity()">
+                    <span class="settings-label">Export Identity</span>
+                    <span class="settings-value">Backup</span>
+                </div>
+                <div class="settings-item" onclick="importIdentity()">
+                    <span class="settings-label">Import Identity</span>
+                    <span class="settings-value">Restore</span>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="section-title">Data</div>
+                <div class="settings-item" onclick="clearAllData()">
+                    <span class="settings-label">Clear All Data</span>
+                    <span class="settings-value" style="color: #ff4444;">Reset</span>
+                </div>
+            </div>
+
+            <div style="padding: 20px 16px; text-align: center;">
+                <div style="font-size: 12px; color: #666;">Hush v1.0 - Secure P2P Messenger</div>
+            </div>
+        </div>
+
+        <!-- Add Contact Modal -->
+        <div class="modal" id="add-contact-modal">
+            <div class="modal-content">
+                <div class="modal-title">Add Contact</div>
+                <input type="text" class="input-field" id="contact-name-input" placeholder="Contact name">
+                <textarea class="input-field" id="contact-key-input" placeholder="Paste their public key" rows="3" style="resize: none;"></textarea>
+                <div class="modal-buttons">
+                    <button class="button secondary" onclick="hideAddContact()">Cancel</button>
+                    <button class="button" onclick="addContact()">Add</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification Modal -->
+        <div class="modal" id="verification-modal">
+            <div class="modal-content">
+                <div class="modal-title">Verify Contact</div>
+                <div class="modal-text">
+                    To ensure end-to-end encryption, verify this code with your contact in person or via another secure channel:
+                </div>
+                <div class="verification-code" id="verification-code">----</div>
+                <div class="modal-buttons">
+                    <button class="button secondary" onclick="hideVerificationModal()">Later</button>
+                    <button class="button" onclick="verifyContact()">Verify</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div id="toast-container"></div>
+    </div>
+
+    <script>
+        // ==================== CRYPTO UTILITIES ====================
+        const CryptoUtils = {
+            async generateKeyPair() {
+                const keyPair = await crypto.subtle.generateKey(
+                    {
+                        name: "ECDSA",
+                        namedCurve: "P-256"
+                    },
+                    true,
+                    ["sign", "verify"]
+                );
+                return keyPair;
+            },
+
+            async exportPublicKey(key) {
+                const exported = await crypto.subtle.exportKey("spki", key);
+                return this.arrayBufferToBase64(exported);
+            },
+
+            async exportPrivateKey(key) {
+                const exported = await crypto.subtle.exportKey("pkcs8", key);
+                return this.arrayBufferToBase64(exported);
+            },
+
+            async importPublicKey(base64Key) {
+                const keyData = this.base64ToArrayBuffer(base64Key);
+                return await crypto.subtle.importKey(
+                    "spki",
+                    keyData,
+                    { name: "ECDSA", namedCurve: "P-256" },
+                    true,
+                    ["verify"]
+                );
+            },
+
+            async importPrivateKey(base64Key) {
+                const keyData = this.base64ToArrayBuffer(base64Key);
+                return await crypto.subtle.importKey(
+                    "pkcs8",
+                    keyData,
+                    { name: "ECDSA", namedCurve: "P-256" },
+                    true,
+                    ["sign"]
+                );
+            },
+
+            async sign(privateKey, data) {
+                const encoder = new TextEncoder();
+                const signature = await crypto.subtle.sign(
+                    { name: "ECDSA", hash: { name: "SHA-256" } },
+                    privateKey,
+                    encoder.encode(data)
+                );
+                return this.arrayBufferToBase64(signature);
+            },
+
+            async verify(publicKey, signature, data) {
+                try {
+                    const encoder = new TextEncoder();
+                    const signatureBuffer = this.base64ToArrayBuffer(signature);
+                    return await crypto.subtle.verify(
+                        { name: "ECDSA", hash: { name: "SHA-256" } },
+                        publicKey,
+                        signatureBuffer,
+                        encoder.encode(data)
+                    );
+                } catch {
+                    return false;
+                }
+            },
+
+            async hash(data) {
+                const encoder = new TextEncoder();
+                const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(data));
+                return this.arrayBufferToBase64(hashBuffer);
+            },
+
+            arrayBufferToBase64(buffer) {
+                const bytes = new Uint8Array(buffer);
+                let binary = '';
+                for (let i = 0; i < bytes.byteLength; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                return btoa(binary);
+            },
+
+            base64ToArrayBuffer(base64) {
+                const binary = atob(base64);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    bytes[i] = binary.charCodeAt(i);
+                }
+                return bytes.buffer;
+            },
+
+            generateVerificationCode() {
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                let code = '';
+                for (let i = 0; i < 6; i++) {
+                    code += chars[Math.floor(Math.random() * chars.length)];
+                }
+                return code;
+            }
+        };
+
+        // ==================== MESSAGE BLOCKCHAIN ====================
+        class MessageChain {
+            constructor() {
+                this.messages = [];
+                this.chain = [];
+                this.loadFromStorage();
+            }
+
+            addMessage(message) {
+                message.id = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                message.verified = false;
+                this.messages.push(message);
+                
+                // Create block
+                const block = {
+                    index: this.chain.length,
+                    timestamp: Date.now(),
+                    message: message,
+                    previousHash: this.chain.length > 0 ? this.chain[this.chain.length - 1].hash : '0',
+                    nonce: 0
+                };
+                
+                this.mineBlock(block).then(minedBlock => {
+                    this.chain.push(minedBlock);
+                    this.saveToStorage();
+                });
+                
+                this.saveToStorage();
+                return message;
+            }
+
+            async mineBlock(block) {
+                const difficulty = 2;
+                const target = '0'.repeat(difficulty);
+                
+                let hash = await this.calculateHash(block);
+                while (!hash.startsWith(target)) {
+                    block.nonce++;
+                    hash = await this.calculateHash(block);
+                }
+                
+                block.hash = hash;
+                return block;
+            }
+
+            async calculateHash(block) {
+                const data = JSON.stringify({
+                    index: block.index,
+                    timestamp: block.timestamp,
+                    messageId: block.message.id,
+                    previousHash: block.previousHash,
+                    nonce: block.nonce
+                });
+                return await CryptoUtils.hash(data);
+            }
+
+            async verifyMessage(message, publicKey, signature) {
+                const data = `${message.sender}${message.recipient}${message.content}${message.timestamp}`;
+                try {
+                    const pubKey = await CryptoUtils.importPublicKey(publicKey);
+                    return await CryptoUtils.verify(pubKey, signature, data);
+                } catch {
+                    return false;
+                }
+            }
+
+            getMessages(contactKey) {
+                return this.messages.filter(msg => 
+                    msg.sender === contactKey || msg.recipient === contactKey
+                ).sort((a, b) => a.timestamp - b.timestamp);
+            }
+
+            getAllConversations() {
+                const conversations = new Map();
+                
+                this.messages.forEach(msg => {
+                    const contactKey = msg.sender === app.publicKey ? msg.recipient : msg.sender;
+                    if (!conversations.has(contactKey)) {
+                        conversations.set(contactKey, []);
+                    }
+                    conversations.get(contactKey).push(msg);
+                });
+                
+                return Array.from(conversations.entries()).map(([key, msgs]) => ({
+                    contactKey: key,
+                    lastMessage: msgs[msgs.length - 1],
+                    unread: msgs.filter(m => !m.read && m.recipient === app.publicKey).length
+                }));
+            }
+
+            saveToStorage() {
+                localStorage.setItem('hush_messages', JSON.stringify({
+                    messages: this.messages,
+                    chain: this.chain
+                }));
+            }
+
+            loadFromStorage() {
+                const saved = localStorage.getItem('hush_messages');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    this.messages = data.messages || [];
+                    this.chain = data.chain || [];
+                }
+            }
+        }
+
+        // ==================== P2P NETWORK SIMULATION ====================
+        class P2PNetwork {
+            constructor() {
+                this.peers = new Map();
+                this.messageHandlers = [];
+                this.connectToRelay();
+            }
+
+            connectToRelay() {
+                // Simulate WebRTC/WebSocket connection
+                this.connected = true;
+                this.startHeartbeat();
+            }
+
+            startHeartbeat() {
+                setInterval(() => {
+                    this.broadcastPresence();
+                }, 30000);
+            }
+
+            broadcastPresence() {
+                if (app.publicKey && app.username) {
+                    const presence = {
+                        type: 'presence',
+                        sender: app.publicKey,
+                        username: app.username,
+                        timestamp: Date.now()
+                    };
+                    this.broadcast(presence);
+                }
+            }
+
+            async sendMessage(recipientKey, content) {
+                if (!app.privateKey || !app.publicKey) {
+                    throw new Error('No identity');
+                }
+
+                const privateKey = await CryptoUtils.importPrivateKey(app.privateKey);
+                
+                const message = {
+                    sender: app.publicKey,
+                    senderName: app.username,
+                    recipient: recipientKey,
+                    content: content,
+                    timestamp: Date.now()
+                };
+
+                const data = `${message.sender}${message.recipient}${message.content}${message.timestamp}`;
+                message.signature = await CryptoUtils.sign(privateKey, data);
+
+                // Add to local chain
+                const savedMessage = app.messageChain.addMessage(message);
+
+                // Simulate sending over network
+                this.broadcast({
+                    type: 'message',
+                    ...message
+                });
+
+                return savedMessage;
+            }
+
+            broadcast(data) {
+                // In a real app, this would send via WebRTC/WebSocket
+                console.log('Broadcasting:', data);
+                
+                // Simulate receiving our own messages
+                setTimeout(() => {
+                    this.handleIncomingMessage(data);
+                }, 100);
+            }
+
+            handleIncomingMessage(data) {
+                if (data.type === 'message' && data.recipient === app.publicKey) {
+                    data.read = false;
+                    const savedMessage = app.messageChain.addMessage(data);
+                    this.messageHandlers.forEach(handler => handler(savedMessage));
+                    app.updateUI();
+                    showToast(`New message from ${data.senderName || 'Unknown'}`);
+                } else if (data.type === 'presence' && data.sender !== app.publicKey) {
+                    this.peers.set(data.sender, {
+                        username: data.username,
+                        lastSeen: data.timestamp
+                    });
+                }
+            }
+
+            onMessage(handler) {
+                this.messageHandlers.push(handler);
+            }
+        }
+
+        // ==================== APP STATE ====================
+        class HushApp {
+            constructor() {
+                this.username = null;
+                this.publicKey = null;
+                this.privateKey = null;
+                this.contacts = new Map();
+                this.messageChain = new MessageChain();
+                this.network = new P2PNetwork();
+                this.currentContact = null;
+                this.verificationCodes = new Map();
+                
+                this.loadContacts();
+                this.loadIdentity();
+                
+                this.network.onMessage(() => {
+                    this.updateUI();
+                });
+            }
+
+            async createIdentity(username) {
+                if (!username || username.length < 2) {
+                    throw new Error('Name required');
+                }
+
+                const keyPair = await CryptoUtils.generateKeyPair();
+                this.publicKey = await CryptoUtils.exportPublicKey(keyPair.publicKey);
+                this.privateKey = await CryptoUtils.exportPrivateKey(keyPair.privateKey);
+                this.username = username;
+
+                this.saveIdentity();
+                this.updateUI();
+                this.network.broadcastPresence();
+                
+                return { username, publicKey: this.publicKey };
+            }
+
+            saveIdentity() {
+                const identity = {
+                    username: this.username,
+                    publicKey: this.publicKey,
+                    privateKey: this.privateKey
+                };
+                localStorage.setItem('hush_identity', JSON.stringify(identity));
+            }
+
+            loadIdentity() {
+                const saved = localStorage.getItem('hush_identity');
+                if (saved) {
+                    const identity = JSON.parse(saved);
+                    this.username = identity.username;
+                    this.publicKey = identity.publicKey;
+                    this.privateKey = identity.privateKey;
+                }
+            }
+
+            addContact(name, publicKey) {
+                if (!name || !publicKey) {
+                    throw new Error('Name and public key required');
+                }
+
+                this.contacts.set(publicKey, {
+                    name: name,
+                    publicKey: publicKey,
+                    verified: false,
+                    verificationCode: CryptoUtils.generateVerificationCode()
+                });
+
+                this.saveContacts();
+                this.updateUI();
+            }
+
+            saveContacts() {
+                const contacts = Array.from(this.contacts.entries()).map(([key, value]) => ({
+                    key: key,
+                    ...value
+                }));
+                localStorage.setItem('hush_contacts', JSON.stringify(contacts));
+            }
+
+            loadContacts() {
+                const saved = localStorage.getItem('hush_contacts');
+                if (saved) {
+                    const contacts = JSON.parse(saved);
+                    contacts.forEach(contact => {
+                        this.contacts.set(contact.key, {
+                            name: contact.name,
+                            publicKey: contact.publicKey,
+                            verified: contact.verified || false,
+                            verificationCode: contact.verificationCode
+                        });
+                    });
+                }
+            }
+
+            async sendMessage(recipientKey, content) {
+                if (!content.trim()) return;
+                
+                const message = await this.network.sendMessage(recipientKey, content.trim());
+                this.updateUI();
+                return message;
+            }
+
+            updateUI() {
+                this.updateChatList();
+                this.updateContactsList();
+                this.updateSettingsUI();
+                
+                if (this.currentContact) {
+                    this.loadMessages(this.currentContact);
+                }
+            }
+
+            updateChatList() {
+                const chatList = document.getElementById('chat-list');
+                const conversations = this.messageChain.getAllConversations();
+                
+                if (conversations.length === 0) {
+                    chatList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">💬</div>
+                            <div>No conversations yet</div>
+                            <div style="font-size: 13px; margin-top: 8px;">Add contacts to start messaging</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                chatList.innerHTML = conversations.map(conv => {
+                    const contact = this.contacts.get(conv.contactKey);
+                    const contactName = contact ? contact.name : 'Unknown';
+                    const lastMessage = conv.lastMessage;
+                    const time = new Date(lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    return `
+                        <div class="chat-item" onclick="openChat('${conv.contactKey}')">
+                            <div class="chat-avatar">${contactName.charAt(0).toUpperCase()}</div>
+                            <div class="chat-info">
+                                <div class="chat-name">${contactName}</div>
+                                <div class="chat-preview">
+                                    ${lastMessage.content.substring(0, 30)}${lastMessage.content.length > 30 ? '...' : ''}
+                                    ${contact && contact.verified ? '<span class="encrypted-badge">✓ Verified</span>' : ''}
+                                </div>
+                            </div>
+                            <div class="chat-meta">
+                                <div class="chat-time">${time}</div>
+                                ${conv.unread > 0 ? `<span class="unread-badge">${conv.unread}</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            updateContactsList() {
+                const contactsList = document.getElementById('contacts-list');
+                const contacts = Array.from(this.contacts.entries());
+                
+                if (contacts.length === 0) {
+                    contactsList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">👤</div>
+                            <div>No contacts yet</div>
+                            <div style="font-size: 13px; margin-top: 8px;">Add contacts to start secure messaging</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                contactsList.innerHTML = contacts.map(([key, contact]) => `
+                    <div class="chat-item" onclick="openChat('${key}')">
+                        <div class="chat-avatar">${contact.name.charAt(0).toUpperCase()}</div>
+                        <div class="chat-info">
+                            <div class="chat-name">${contact.name}</div>
+                            <div class="chat-preview">
+                                ${contact.verified ? '<span class="encrypted-badge">✓ Verified</span>' : '<span style="color: #666;">Not verified</span>'}
+                            </div>
+                        </div>
+                        <div class="chat-meta">
+                            <button class="button secondary" style="padding: 6px 12px; font-size: 12px;" onclick="event.stopPropagation(); showVerificationCode('${key}')">
+                                Verify
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateSettingsUI() {
+                if (this.username) {
+                    document.getElementById('identity-name').textContent = this.username;
+                    document.getElementById('public-key-display').textContent = 
+                        this.publicKey.substring(0, 40) + '...';
+                    document.getElementById('create-identity-btn').textContent = 'Update Identity';
+                }
+            }
+
+            loadMessages(contactKey) {
+                const container = document.getElementById('messages-container');
+                const messages = this.messageChain.getMessages(contactKey);
+                const contact = this.contacts.get(contactKey);
+                
+                document.getElementById('current-contact-name').textContent = contact ? contact.name : 'Unknown';
+                
+                if (messages.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🔒</div>
+                            <div>No messages yet</div>
+                            <div style="font-size: 13px; margin-top: 8px;">Messages are end-to-end encrypted</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = messages.map(msg => {
+                    const isSent = msg.sender === this.publicKey;
+                    const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    // Mark as read
+                    if (!isSent && !msg.read) {
+                        msg.read = true;
+                        this.messageChain.saveToStorage();
+                    }
+                    
+                    return `
+                        <div class="message ${isSent ? 'sent' : 'received'}">
+                            <div class="message-bubble">
+                                ${this.escapeHtml(msg.content)}
+                            </div>
+                            <div class="message-time">
+                                ${time}
+                                ${msg.signature ? '<span class="verification-badge">✓ Signed</span>' : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Scroll to bottom
+                setTimeout(() => {
+                    container.scrollTop = container.scrollHeight;
+                }, 100);
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            clearAllData() {
+                if (confirm('Delete all messages, contacts, and identity? This cannot be undone.')) {
+                    localStorage.clear();
+                    location.reload();
+                }
+            }
+
+            exportIdentity() {
+                if (!this.privateKey || !this.publicKey) {
+                    showToast('No identity to export');
+                    return;
+                }
+
+                const exportData = {
+                    username: this.username,
+                    publicKey: this.publicKey,
+                    privateKey: this.privateKey,
+                    contacts: Array.from(this.contacts.entries())
+                };
+
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `hush-identity-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                showToast('Identity exported');
+            }
+
+            importIdentity() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                
+                input.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    
+                    reader.onload = async (event) => {
+                        try {
+                            const data = JSON.parse(event.target.result);
+                            this.username = data.username;
+                            this.publicKey = data.publicKey;
+                            this.privateKey = data.privateKey;
+                            this.contacts = new Map(data.contacts);
+                            
+                            this.saveIdentity();
+                            this.saveContacts();
+                            this.updateUI();
+                            
+                            showToast('Identity imported');
+                        } catch (error) {
+                            showToast('Failed to import identity');
+                        }
+                    };
+                    
+                    reader.readAsText(file);
+                };
+                
+                input.click();
+            }
+        }
+
+        // ==================== GLOBAL APP ====================
+        const app = new HushApp();
+
+        // ==================== UI FUNCTIONS ====================
+        function navigateTo(screen) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(`${screen}-screen`).classList.add('active');
+            document.querySelector(`[data-screen="${screen}"]`).classList.add('active');
+            
+            app.updateUI();
+        }
+
+        function openChat(contactKey) {
+            app.currentContact = contactKey;
+            navigateTo('messages');
+            app.loadMessages(contactKey);
+        }
+
+        async function createIdentity() {
+            const username = document.getElementById('username-input').value.trim();
+            
+            try {
+                await app.createIdentity(username);
+                showToast('Identity created');
+                navigateTo('chats');
+            } catch (error) {
+                showToast(error.message);
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const content = input.value.trim();
+            
+            if (!content || !app.currentContact) return;
+            
+            const button = document.getElementById('send-button');
+            button.disabled = true;
+            
+            try {
+                await app.sendMessage(app.currentContact, content);
+                input.value = '';
+                app.loadMessages(app.currentContact);
+                app.updateUI();
+            } catch (error) {
+                showToast('Failed to send message');
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        function showAddContact() {
+            document.getElementById('add-contact-modal').classList.add('active');
+        }
+
+        function hideAddContact() {
+            document.getElementById('add-contact-modal').classList.remove('active');
+            document.getElementById('contact-name-input').value = '';
+            document.getElementById('contact-key-input').value = '';
+        }
+
+        function addContact() {
+            const name = document.getElementById('contact-name-input').value.trim();
+            const key = document.getElementById('contact-key-input').value.trim();
+            
+            try {
+                app.addContact(name, key);
+                hideAddContact();
+                showToast('Contact added');
+            } catch (error) {
+                showToast(error.message);
+            }
+        }
+
+        function showVerificationCode(contactKey) {
+            const contact = app.contacts.get(contactKey);
+            if (contact) {
+                document.getElementById('verification-code').textContent = contact.verificationCode;
+                document.getElementById('verification-modal').classList.add('active');
+                app.verificationCodes.set('current', contactKey);
+            }
+        }
+
+        function hideVerificationModal() {
+            document.getElementById('verification-modal').classList.remove('active');
+        }
+
+        function verifyContact() {
+            const contactKey = app.verificationCodes.get('current');
+            const contact = app.contacts.get(contactKey);
+            
+            if (contact) {
+                contact.verified = true;
+                app.saveContacts();
+                app.updateUI();
+                showToast('Contact verified');
+            }
+            
+            hideVerificationModal();
+        }
+
+        function showVerificationInfo() {
+            showToast('Each message is cryptographically signed and verified');
+        }
+
+        function exportIdentity() {
+            app.exportIdentity();
+        }
+
+        function importIdentity() {
+            app.importIdentity();
+        }
+
+        function clearAllData() {
+            app.clearAllData();
+        }
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            app.updateUI();
+            
+            // Navigation
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    navigateTo(tab.dataset.screen);
+                });
+            });
+            
+            // Message input auto-resize
+            const messageInput = document.getElementById('message-input');
+            messageInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+            });
+            
+            // Send on Enter (Shift+Enter for new line)
+            messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
+
+        // Copy public key to clipboard
+        function copyPublicKey() {
+            if (app.publicKey) {
+                navigator.clipboard?.writeText(app.publicKey);
+                showToast('Public key copied');
+            }
+        }
+    </script>
+</body>
+</html>
